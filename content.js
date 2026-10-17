@@ -259,7 +259,10 @@ window.AASA_CONTENT = {
     },
   ],
 
-  quotes: [],
+  quotes: [
+    { text: "I've truly found my people in AASA." },
+    { text: "It's always fun to see what's up at these events as a distraction from classes." },
+  ],
   quotesEmpty:
     "Member stories are on their way. Have an AASA memory to share? Send us a message. We’d love to hear it.",
   contactMessage:

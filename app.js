@@ -393,13 +393,11 @@
     }
     content.quotes.forEach((quote) => {
       const blockquote = create_element("blockquote", "", `“${quote.text}”`);
-      blockquote.append(
-        create_element(
-          "cite",
-          "",
-          `${quote.name}${quote.detail ? " · " + quote.detail : ""}`,
-        ),
-      );
+      if (quote.name) {
+        blockquote.append(
+          create_element("cite", "", quote.name + (quote.detail ? " · " + quote.detail : "")),
+        );
+      }
       get_element("quote-list").append(blockquote);
     });
   }
