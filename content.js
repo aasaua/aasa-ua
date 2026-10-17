@@ -265,5 +265,5 @@ window.AASA_CONTENT = {
   contactMessage:
     "Curious about AASA or an upcoming event? Message us on Instagram. We’d love to hear from you.",
   instagram: "https://www.instagram.com/ua.aasa/",
-  email: "",
+  email: "bama.aasa@gmail.com",
 };
