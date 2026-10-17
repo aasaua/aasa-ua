@@ -1,34 +1,413 @@
 (() => {
-  'use strict';
-  const c = window.AASA_CONTENT;
-  const $ = id => document.getElementById(id);
-  const el = (tag, className, text) => { const n = document.createElement(tag); if(className) n.className=className; if(text !== undefined) n.textContent=text; return n; };
-  const dateOf = date => new Date(`${date}T12:00:00`);
-  if(c.logo){$('club-logo').src=c.logo;$('club-logo').hidden=false;$('logo-placeholder').hidden=true;}
-  const format = (date, options) => date.toLocaleDateString('en-US', options);
-  for(const [id,key] of Object.entries({'hero-title':'heroTitle','hero-description':'heroDescription',mission:'mission',welcome:'welcome',semester:'semester','events-note':'eventsNote','officer-note':'officerNote','contact-message':'contactMessage'})) $(id).textContent=c[key];
-  document.querySelectorAll('.instagram-link').forEach(a=>a.href=c.instagram);
-  if(c.email){$('email-link').hidden=false;$('email-link').href=`mailto:${c.email}`;$('email-label').textContent=c.email;}
-  const events=[...c.events].sort((a,b)=>a.date.localeCompare(b.date));
-  events.forEach(e=>{const d=dateOf(e.date),row=el('article','event-row'),date=el('div','date-block');date.append(el('span','',format(d,{month:'short'}).toUpperCase()),el('strong','',d.getDate()));const body=el('div');body.append(el('h3','',e.title),el('p','',`${format(d,{weekday:'short'})} · ${e.time} · ${e.location}`));row.append(date,body);$('event-list').append(row);});
-  if(!events.length) $('event-list').append(el('p','','New meeting dates will be announced soon.'));
-  const now=new Date();const next=events.find(e=>e.date>=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`);
-  const initial=next?dateOf(next.date):(events.length?dateOf(events[events.length-1].date):now);
-  let month=new Date(initial.getFullYear(),initial.getMonth(),1);
-  function renderCalendar(){
-    $('calendar-title').textContent=format(month,{month:'long',year:'numeric'});$('calendar-days').replaceChildren();$('selected-event').textContent='Select a highlighted date to see event details.';
-    for(let i=0;i<month.getDay();i++) $('calendar-days').append(el('span'));
-    const count=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
-    for(let day=1;day<=count;day++){
-      const d=new Date(month.getFullYear(),month.getMonth(),day);const match=events.filter(e=>{const t=dateOf(e.date);return t.getFullYear()===d.getFullYear()&&t.getMonth()===d.getMonth()&&t.getDate()===day;});
-      const n=el(match.length?'button':'span','',day);
-      if(match.length){n.type='button';n.setAttribute('aria-label',`${format(d,{month:'long',day:'numeric',year:'numeric'})}: ${match.map(e=>e.title).join(', ')}`);n.setAttribute('aria-pressed','false');n.addEventListener('click',()=>{document.querySelectorAll('#calendar-days button').forEach(b=>b.setAttribute('aria-pressed','false'));n.setAttribute('aria-pressed','true');$('selected-event').textContent=match.map(e=>`${e.title} · ${format(d,{month:'short',day:'numeric'})} · ${e.time} · ${e.location}`).join(' / ');});}
-      $('calendar-days').append(n);
+  "use strict";
+
+  const content = window.AASA_CONTENT;
+  const get_element = (id) => document.getElementById(id);
+
+  // use text content so editable copy is always treated as text
+  function create_element(tag, class_name, text) {
+    const element = document.createElement(tag);
+    if (class_name) element.className = class_name;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  }
+
+  // local noon keeps date only values on the intended calendar day
+  const parse_date = (date) => new Date(`${date}T12:00:00`);
+  const format_date = (date, options) =>
+    date.toLocaleDateString("en-US", options);
+  const events = [...content.events].sort((first, second) =>
+    first.date.localeCompare(second.date),
+  );
+
+  // crop the display window while keeping the original image pixels intact
+  function apply_image_crop(image, crop) {
+    const width = crop.width || crop.size;
+    const height = crop.height || crop.size;
+    image.style.width = (crop.source_width / width) * 100 + "%";
+    image.style.left = (-crop.x / width) * 100 + "%";
+    image.style.top = (-crop.y / height) * 100 + "%";
+  }
+
+  function render_page_details() {
+    const text_fields = {
+      "hero-title": "heroTitle",
+      "hero-description": "heroDescription",
+      mission: "mission",
+      welcome: "welcome",
+      semester: "semester",
+      "events-note": "eventsNote",
+      "officer-note": "officerNote",
+      "contact-message": "contactMessage",
+    };
+    for (const [id, key] of Object.entries(text_fields)) {
+      get_element(id).textContent = content[key];
+    }
+    document.querySelectorAll(".instagram-link").forEach((link) => {
+      link.href = content.instagram;
+    });
+
+    // keep the placeholders when optional contact details or images are missing
+    if (content.logo) {
+      get_element("club-logo").src = content.logo;
+      get_element("club-logo").hidden = false;
+      if (content.logo_crop) {
+        get_element("logo-frame").className = "image-crop";
+        apply_image_crop(get_element("club-logo"), content.logo_crop);
+      }
+      get_element("logo-frame").hidden = false;
+      get_element("logo-placeholder").hidden = true;
+    }
+    if (content.email) {
+      get_element("email-link").hidden = false;
+      get_element("email-link").href = `mailto:${content.email}`;
+      get_element("email-label").textContent = content.email;
     }
   }
-  $('previous-month').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()-1,1);renderCalendar();};$('next-month').onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+1,1);renderCalendar();};renderCalendar();
-  c.announcements.forEach(a=>{const n=el('article','announcement');n.append(el('p','eyebrow',a.label),el('h3','',a.title),el('p','',a.text));$('announcement-list').append(n);});
-  c.officers.forEach(o=>{const n=el('article','officer');if(o.photo){const img=el('img','officer-photo');img.src=o.photo;img.alt=o.name;img.loading='lazy';n.append(img);}else{const p=el('div','officer-placeholder');p.append(el('span','','aasa'),el('small','','Photo coming soon'));n.append(p);}n.append(el('h3','',o.name),el('p','role',o.role));if(o.bio)n.append(el('p','bio',o.bio));$('officer-list').append(n);});
-  c.gallery.forEach(g=>{const n=el('figure');let img;if(g.crop){img=el('div',`photo-crop ${g.crop}`);img.style.backgroundImage=`url("${g.src}")`;img.setAttribute('role','img');img.setAttribute('aria-label',g.alt);}else{img=el('img');img.src=g.src;img.alt=g.alt;img.loading='lazy';}const caption=el('figcaption');caption.append(el('span','',g.label),document.createTextNode(g.caption));n.append(img,caption);$('gallery-list').append(n);});
-  if(c.quotes.length)c.quotes.forEach(q=>{const n=el('blockquote','',`“${q.text}”`);n.append(el('cite','',`${q.name}${q.detail?' · '+q.detail:''}`));$('quote-list').append(n);});else $('quote-list').append(el('p','empty-quotes',c.quotesEmpty));
+
+  function render_events() {
+    events.forEach((event) => {
+      const event_date = parse_date(event.date);
+      const row = create_element("article", "event-row");
+      const date_block = create_element("div", "date-block");
+      date_block.append(
+        create_element(
+          "span",
+          "",
+          format_date(event_date, { month: "short" }).toUpperCase(),
+        ),
+        create_element("strong", "", event_date.getDate()),
+      );
+      const details = create_element("div");
+      details.append(
+        create_element("h3", "", event.title),
+        create_element(
+          "p",
+          "",
+          `${format_date(event_date, { weekday: "short" })} · ${event.time} · ${event.location}`,
+        ),
+      );
+      row.append(date_block, details);
+      get_element("event-list").append(row);
+    });
+    if (!events.length) {
+      get_element("event-list").append(
+        create_element("p", "", "New meeting dates will be announced soon."),
+      );
+    }
+  }
+
+  // use the campus timezone and open the current month without freezing the date
+  const date_parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const current_date = Object.fromEntries(
+    date_parts.map((part) => [part.type, part.value]),
+  );
+  const today_key =
+    current_date.year + "-" + current_date.month + "-" + current_date.day;
+  let displayed_month = new Date(
+    Number(current_date.year),
+    Number(current_date.month) - 1,
+    1,
+  );
+
+  function select_calendar_day(button, date, day_events) {
+    document.querySelectorAll("#calendar-days button").forEach((day_button) => {
+      day_button.setAttribute("aria-pressed", "false");
+    });
+    button.setAttribute("aria-pressed", "true");
+    get_element("selected-event").textContent = day_events
+      .map(
+        (event) =>
+          `${event.title} · ${format_date(date, { month: "short", day: "numeric" })} · ${event.time} · ${event.location}`,
+      )
+      .join(" / ");
+  }
+
+  function render_calendar() {
+    const calendar_days = get_element("calendar-days");
+    get_element("calendar-title").textContent = format_date(displayed_month, {
+      month: "long",
+      year: "numeric",
+    });
+    calendar_days.replaceChildren();
+    get_element("selected-event").textContent =
+      "Select a highlighted date to see event details.";
+
+    // empty cells align the first date with its weekday
+    for (let weekday = 0; weekday < displayed_month.getDay(); weekday++) {
+      calendar_days.append(create_element("span"));
+    }
+    const year = displayed_month.getFullYear();
+    const month_index = displayed_month.getMonth();
+    const days_in_month = new Date(year, month_index + 1, 0).getDate();
+
+    for (let day = 1; day <= days_in_month; day++) {
+      const date = new Date(year, month_index, day);
+      const day_events = events.filter((event) => {
+        const event_date = parse_date(event.date);
+        return (
+          event_date.getFullYear() === year &&
+          event_date.getMonth() === month_index &&
+          event_date.getDate() === day
+        );
+      });
+      const cell = create_element(
+        day_events.length ? "button" : "span",
+        "",
+        day,
+      );
+
+      const date_key =
+        year +
+        "-" +
+        String(month_index + 1).padStart(2, "0") +
+        "-" +
+        String(day).padStart(2, "0");
+      if (date_key === today_key) cell.setAttribute("aria-current", "date");
+
+      // only event dates are interactive and announced as buttons
+      if (day_events.length) {
+        cell.type = "button";
+        cell.setAttribute(
+          "aria-label",
+          `${format_date(date, { month: "long", day: "numeric", year: "numeric" })}: ${day_events.map((event) => event.title).join(", ")}`,
+        );
+        cell.setAttribute("aria-pressed", "false");
+        cell.addEventListener("click", () =>
+          select_calendar_day(cell, date, day_events),
+        );
+      }
+      calendar_days.append(cell);
+    }
+  }
+
+  function change_month(offset) {
+    displayed_month = new Date(
+      displayed_month.getFullYear(),
+      displayed_month.getMonth() + offset,
+      1,
+    );
+    render_calendar();
+  }
+
+  function render_announcements() {
+    content.announcements.forEach((announcement) => {
+      const card = create_element("article", "announcement");
+      card.append(
+        create_element("p", "eyebrow", announcement.label),
+        create_element("h3", "", announcement.title),
+        create_element("p", "", announcement.text),
+      );
+      get_element("announcement-list").append(card);
+    });
+  }
+
+  function render_officers() {
+    content.officers.forEach((officer) => {
+      const card = create_element("article", "officer");
+      if (officer.photo) {
+        const photo = create_element("img", "officer-photo");
+        photo.src = officer.photo;
+        photo.alt = officer.name;
+        photo.loading = "lazy";
+        if (officer.crop) {
+          const frame = create_element("div", "officer-photo image-crop");
+          frame.style.aspectRatio =
+            officer.crop.width + " / " + officer.crop.height;
+          photo.className = "";
+          apply_image_crop(photo, officer.crop);
+          frame.append(photo);
+          card.append(frame);
+        } else {
+          card.append(photo);
+        }
+      } else {
+        const placeholder = create_element("div", "officer-placeholder");
+        placeholder.append(
+          create_element("span", "", "aasa"),
+          create_element("small", "", "Photo coming soon"),
+        );
+        card.append(placeholder);
+      }
+      card.append(
+        create_element("h3", "", officer.name),
+        create_element("p", "role", officer.role),
+      );
+      const description = create_element("div", "officer-description");
+      description.append(
+        create_element("p", "officer-year", officer.year),
+        create_element("p", "", officer.major),
+      );
+      if (officer.study)
+        description.append(create_element("p", "", officer.study));
+      description.append(
+        create_element("p", "officer-hometown", "From " + officer.hometown),
+      );
+      card.append(description);
+      get_element("officer-list").append(card);
+    });
+  }
+
+  function render_gallery() {
+    const gallery = get_element("gallery-list");
+    const files = window.AASA_GALLERY || [];
+    if (!files.length) {
+      gallery.append(create_element("p", "", "Photos coming soon."));
+      return;
+    }
+
+    // a shared preview follows the pointer without blocking the collage beneath it
+    const preview = create_element("div", "gallery-preview");
+    const preview_image = create_element("img");
+    preview.hidden = true;
+    preview.setAttribute("aria-hidden", "true");
+    preview.append(preview_image);
+    document.body.append(preview);
+    const hover_available = window.matchMedia(
+      "(hover: hover) and (pointer: fine)",
+    );
+    let active_tile = null;
+
+    function hide_preview() {
+      preview.hidden = true;
+      active_tile = null;
+    }
+
+    function position_preview(x, y) {
+      const bounds = preview.getBoundingClientRect();
+      const left =
+        x + bounds.width + 20 < window.innerWidth
+          ? x + 20
+          : x - bounds.width - 20;
+      const top =
+        y + bounds.height + 20 < window.innerHeight
+          ? y + 20
+          : y - bounds.height - 20;
+      preview.style.left =
+        Math.max(12, Math.min(left, window.innerWidth - bounds.width - 12)) +
+        "px";
+      preview.style.top =
+        Math.max(12, Math.min(top, window.innerHeight - bounds.height - 12)) +
+        "px";
+    }
+
+    function show_preview(tile, image, x, y) {
+      if (!image.complete || !image.naturalWidth) return;
+      active_tile = tile;
+      preview_image.src = image.src;
+      preview_image.alt = image.alt;
+      const ratio = image.naturalWidth / image.naturalHeight;
+      const width = Math.min(
+        320,
+        window.innerWidth - 24,
+        Math.min(420, window.innerHeight - 40) * ratio,
+      );
+      preview.style.width = width + "px";
+      preview.style.height = width / ratio + "px";
+      preview.hidden = false;
+      position_preview(x, y);
+    }
+
+    // a dialog gives touch and keyboard users the same full image view
+    const dialog = create_element("dialog", "gallery-dialog");
+    dialog.setAttribute("aria-label", "Enlarged gallery photo");
+    const close = create_element("button", "gallery-close", "Close ×");
+    close.type = "button";
+    const full_image = create_element("img");
+    dialog.append(close, full_image);
+    document.body.append(dialog);
+    close.addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    files.forEach((filename) => {
+      const details =
+        content.gallery.find((photo) => photo.file === filename) || {};
+      const tile = create_element("button", "gallery-tile");
+      tile.type = "button";
+      const image = create_element("img");
+      image.alt =
+        details.alt || filename.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
+      tile.setAttribute("aria-label", "Enlarge photo: " + image.alt);
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.addEventListener("load", () => {
+        tile.style.setProperty(
+          "--photo-ratio",
+          image.naturalWidth / image.naturalHeight,
+        );
+      });
+      image.addEventListener("error", () => {
+        if (active_tile === tile) hide_preview();
+        tile.hidden = true;
+      });
+      image.src = "assets/gallery/" + encodeURIComponent(filename);
+      tile.append(image);
+      gallery.append(tile);
+      tile.addEventListener("pointerenter", (event) => {
+        if (hover_available.matches && event.pointerType !== "touch") {
+          show_preview(tile, image, event.clientX, event.clientY);
+        }
+      });
+      tile.addEventListener("pointermove", (event) => {
+        if (active_tile === tile)
+          position_preview(event.clientX, event.clientY);
+      });
+      tile.addEventListener("pointerleave", hide_preview);
+      tile.addEventListener("focus", () => {
+        if (!tile.matches(":focus-visible")) return;
+        const bounds = tile.getBoundingClientRect();
+        show_preview(tile, image, bounds.right, bounds.top);
+      });
+      tile.addEventListener("blur", hide_preview);
+      tile.addEventListener("click", () => {
+        hide_preview();
+        full_image.src = image.src;
+        full_image.alt = image.alt;
+        dialog.showModal();
+      });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") hide_preview();
+    });
+    window.addEventListener("scroll", hide_preview, { passive: true });
+    window.addEventListener("resize", hide_preview);
+  }
+
+  function render_quotes() {
+    if (!content.quotes.length) {
+      get_element("quote-list").append(
+        create_element("p", "empty-quotes", content.quotesEmpty),
+      );
+      return;
+    }
+    content.quotes.forEach((quote) => {
+      const blockquote = create_element("blockquote", "", `“${quote.text}”`);
+      blockquote.append(
+        create_element(
+          "cite",
+          "",
+          `${quote.name}${quote.detail ? " · " + quote.detail : ""}`,
+        ),
+      );
+      get_element("quote-list").append(blockquote);
+    });
+  }
+
+  // deferred scripts run after the page markup is ready
+  render_page_details();
+  render_events();
+  render_calendar();
+  render_announcements();
+  render_officers();
+  render_gallery();
+  render_quotes();
+  get_element("previous-month").onclick = () => change_month(-1);
+  get_element("next-month").onclick = () => change_month(1);
 })();
