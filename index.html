@@ -14,11 +14,11 @@
       type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23267f91'/%3E%3Ctext x='32' y='46' font-size='44' text-anchor='middle' font-family='Georgia' fill='%23bce4e6'%3Ea%3C/text%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=banner-2" />
     <!-- load editable content before the script that fills each section -->
     <script src="gallery.js" defer></script>
     <script src="content.js" defer></script>
-    <script src="app.js" defer></script>
+    <script src="app.js?v=banner-2" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -36,22 +36,22 @@
     <!-- empty content containers below are filled by the page script -->
     <main id="main">
       <section class="hero section-wrap" id="home">
-        <div class="logo-space" aria-hidden="true">
-          <div class="logo-frame" hidden>
-            <img class="club-logo" alt="" hidden />
+        <div class="logo-space hero-logo-left" aria-hidden="true">
+          <div class="logo-frame image-crop">
+            <img class="club-logo" src="assets/logo.png" alt="" />
           </div>
-          <span class="logo-placeholder">AASA</span>
+          <span class="logo-placeholder" hidden>AASA</span>
         </div>
         <div class="hero-copy">
           <h1 id="hero-title"></h1>
           <p class="hero-description" id="hero-description"></p>
           <a class="button" href="#events">View events</a>
         </div>
-        <div class="logo-space" aria-hidden="true">
-          <div class="logo-frame" hidden>
-            <img class="club-logo" alt="" hidden />
+        <div class="logo-space hero-logo-right" aria-hidden="true">
+          <div class="logo-frame image-crop">
+            <img class="club-logo" src="assets/logo.png" alt="" />
           </div>
-          <span class="logo-placeholder">AASA</span>
+          <span class="logo-placeholder" hidden>AASA</span>
         </div>
       </section>
       <section class="section-wrap about" id="about">

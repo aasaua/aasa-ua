@@ -1066,3 +1066,31 @@ h2 {
     gap: 8px;
   }
 }
+
+/* explicit banner positions keep both logos on opposite sides of the copy */
+#home.hero {
+  display: grid;
+  grid-template-areas: "left copy right";
+  align-items: center;
+}
+.hero-logo-left {
+  grid-area: left;
+}
+.hero-logo-right {
+  grid-area: right;
+}
+.hero-copy {
+  grid-area: copy;
+  text-align: center;
+}
+.hero .logo-frame {
+  width: 100%;
+  aspect-ratio: 1;
+}
+.hero .club-logo {
+  width: 112.7962%;
+  height: auto;
+  left: -6.6351%;
+  top: -6.6351%;
+  padding: 0;
+}
