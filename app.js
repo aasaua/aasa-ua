@@ -49,14 +49,18 @@
 
     // keep the placeholders when optional contact details or images are missing
     if (content.logo) {
-      get_element("club-logo").src = content.logo;
-      get_element("club-logo").hidden = false;
-      if (content.logo_crop) {
-        get_element("logo-frame").className = "image-crop";
-        apply_image_crop(get_element("club-logo"), content.logo_crop);
-      }
-      get_element("logo-frame").hidden = false;
-      get_element("logo-placeholder").hidden = true;
+      document.querySelectorAll(".logo-space").forEach((container) => {
+        const image = container.querySelector(".club-logo");
+        const frame = container.querySelector(".logo-frame");
+        image.src = content.logo;
+        image.hidden = false;
+        if (content.logo_crop) {
+          frame.classList.add("image-crop");
+          apply_image_crop(image, content.logo_crop);
+        }
+        frame.hidden = false;
+        container.querySelector(".logo-placeholder").hidden = true;
+      });
     }
     if (content.email) {
       get_element("email-link").hidden = false;
